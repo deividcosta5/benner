@@ -1,0 +1,67 @@
+@model DigitalMicrowave.Web.Models.CreateProgramViewModel
+@{
+    ViewData["Title"] = "Novo Programa";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <strong>➕ Cadastrar Programa Customizado</strong>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Nome do Programa *</label>
+                        <input asp-for="Name" class="form-control" placeholder="Ex: Sopa" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Food" class="form-label">Alimento *</label>
+                        <input asp-for="Food" class="form-control" placeholder="Ex: Sopa de legumes" />
+                        <span asp-validation-for="Food" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-4">
+                            <label asp-for="TimeInSeconds" class="form-label">Tempo (segundos) *</label>
+                            <input asp-for="TimeInSeconds" class="form-control" type="number" min="1" max="120" />
+                            <span asp-validation-for="TimeInSeconds" class="text-danger small"></span>
+                        </div>
+                        <div class="col-sm-4">
+                            <label asp-for="Power" class="form-label">Potência (1–10) *</label>
+                            <input asp-for="Power" class="form-control" type="number" min="1" max="10" />
+                            <span asp-validation-for="Power" class="text-danger small"></span>
+                        </div>
+                        <div class="col-sm-4">
+                            <label asp-for="HeatingChar" class="form-label">Char. Aquecimento *</label>
+                            <input asp-for="HeatingChar" class="form-control" maxlength="1"
+                                   placeholder="Ex: s" />
+                            <span asp-validation-for="HeatingChar" class="text-danger small"></span>
+                            <div class="form-text">Não pode ser '.'</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Instructions" class="form-label">Instruções (opcional)</label>
+                        <textarea asp-for="Instructions" class="form-control" rows="3"
+                                  placeholder="Instruções de uso..."></textarea>
+                        <span asp-validation-for="Instructions" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">💾 Salvar</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,178 @@
+@model DigitalMicrowave.Web.Models.MicrowaveViewModel
+@{
+    ViewData["Title"] = "Painel";
+    var s = Model.Session;
+    bool running  = s.Status == DigitalMicrowave.Business.Models.HeatingStatus.Running;
+    bool paused   = s.Status == DigitalMicrowave.Business.Models.HeatingStatus.Paused;
+    bool idle     = s.Status == DigitalMicrowave.Business.Models.HeatingStatus.Idle;
+    bool disabled = running || paused;
+}
+
+<div class="row g-4">
+
+    <div class="col-lg-6">
+        <div class="card microwave-card shadow">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Micro-ondas Digital</span>
+                <span id="status-badge" class="badge @(running ? "bg-success" : paused ? "bg-warning text-dark" : s.IsCompleted ? "bg-info" : "bg-secondary")">
+                    @(running ? "Aquecendo" : paused ? "Pausado" : s.IsCompleted ? "Concluído" : "Aguardando")
+                </span>
+            </div>
+            <div class="card-body">
+
+                <div class="microwave-display mb-3">
+                    <div class="display-time" id="display-time">
+                        @(idle ? "00:00" : s.FormattedRemainingTime)
+                    </div>
+                    <div class="display-sub">
+                        Potência: <span id="display-power">@(s.Power > 0 ? s.Power.ToString() : "-")</span>
+                        <span id="display-program" class="@(s.Program == null ? "d-none" : "")">
+                            &nbsp;· @s.Program?.Name
+                        </span>
+                    </div>
+                </div>
+
+                <div class="heating-box" id="heating-box">
+                    <span id="heating-string">@s.HeatingString</span>
+                </div>
+
+                <form asp-action="Start" method="post" class="mt-3">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Tempo (segundos)</label>
+                            <input type="number" id="input-time" name="timeInSeconds"
+                                   class="form-control form-control-lg text-center"
+                                   min="1" max="120" placeholder="1 – 120"
+                                   @(disabled ? "disabled" : "") />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Potência (1 – 10)</label>
+                            <input type="number" id="input-power" name="power"
+                                   class="form-control form-control-lg text-center"
+                                   min="1" max="10" placeholder="padrão 10"
+                                   @(disabled ? "disabled" : "") />
+                        </div>
+                    </div>
+
+                    <div class="numpad mb-3">
+                        @foreach (var n in new[] { 1,2,3,4,5,6,7,8,9,0 })
+                        {
+                            <button type="button" class="btn btn-outline-secondary numpad-btn"
+                                    onclick="appendDigit('@n')" @(disabled ? "disabled" : "")>@n</button>
+                        }
+                        <button type="button" class="btn btn-outline-danger numpad-btn"
+                                onclick="clearField()" @(disabled ? "disabled" : "")>C</button>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" id="btn-start" class="btn btn-success btn-lg">
+                            @(paused ? "▶ Retomar" : running ? "⏩ +30 segundos" : "▶ Iniciar")
+                        </button>
+                    </div>
+                </form>
+
+                <form asp-action="PauseOrCancel" method="post" class="mt-2">
+                    @Html.AntiForgeryToken()
+                    <div class="d-grid">
+                        <button type="submit" id="btn-pause" class="btn btn-warning btn-lg">
+                            @(running ? "⏸ Pausar" : paused ? "⛔ Cancelar" : "🗑 Limpar")
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow h-100">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Programas de Aquecimento</span>
+                <a href="/Programs/Create" class="btn btn-sm btn-warning">+ Novo</a>
+            </div>
+            <div class="list-group list-group-flush">
+                @foreach (var p in Model.Programs)
+                {
+                    <div class="list-group-item program-item @(p.IsCustom ? "program-custom" : "")">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold @(p.IsCustom ? "fst-italic" : "")">
+                                    @p.Name
+                                    @if (p.IsCustom) { <span class="badge bg-warning text-dark ms-1">custom</span> }
+                                </div>
+                                <small class="text-muted">
+                                    @p.Food &nbsp;·&nbsp;
+                                    @(p.TimeInSeconds >= 60 ? $"{p.TimeInSeconds / 60}min {(p.TimeInSeconds % 60 > 0 ? $"{p.TimeInSeconds % 60}s" : "")}" : $"{p.TimeInSeconds}s") &nbsp;·&nbsp;
+                                    Pot. @p.Power &nbsp;·&nbsp; '<code>@p.HeatingChar</code>'
+                                </small>
+                                @if (!string.IsNullOrEmpty(p.Instructions))
+                                {
+                                    <div class="text-muted small mt-1">@p.Instructions</div>
+                                }
+                            </div>
+                            <form asp-controller="Home" asp-action="StartProgram" method="post" class="ms-2 flex-shrink-0">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="programId" value="@p.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-success">▶</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/microwaveHub")
+        .withAutomaticReconnect()
+        .build();
+
+    connection.on("sessionUpdated", update);
+    connection.start().catch(console.error);
+
+    function update(data) {
+        if (!data) return;
+
+        document.getElementById("display-time").textContent = data.remainingTime || "00:00";
+        document.getElementById("display-power").textContent = data.power || "-";
+        document.getElementById("heating-string").textContent = data.heatingString || "";
+
+        const prog = document.getElementById("display-program");
+        if (data.programName) { prog.textContent = " · " + data.programName; prog.classList.remove("d-none"); }
+        else prog.classList.add("d-none");
+
+        const badges   = { Running: "bg-success", Paused: "bg-warning text-dark", Completed: "bg-info", Idle: "bg-secondary" };
+        const labels   = { Running: "Aquecendo",  Paused: "Pausado",              Completed: "Concluído", Idle: "Aguardando" };
+        const badge = document.getElementById("status-badge");
+        badge.className = "badge " + (badges[data.status] || "bg-secondary");
+        badge.textContent = labels[data.status] || data.status;
+
+        document.getElementById("btn-start").textContent =
+            data.status === "Paused" ? "▶ Retomar" : data.status === "Running" ? "⏩ +30 segundos" : "▶ Iniciar";
+        document.getElementById("btn-pause").textContent =
+            data.status === "Running" ? "⏸ Pausar" : data.status === "Paused" ? "⛔ Cancelar" : "🗑 Limpar";
+
+        const box = document.getElementById("heating-box");
+        box.scrollTop = box.scrollHeight;
+    }
+
+    let activeField = "time";
+    document.getElementById("input-time").addEventListener("focus", () => activeField = "time");
+    document.getElementById("input-power").addEventListener("focus", () => activeField = "power");
+
+    function appendDigit(d) {
+        const el = document.getElementById(activeField === "time" ? "input-time" : "input-power");
+        el.value = (el.value || "") + d;
+    }
+
+    function clearField() {
+        const el = document.getElementById(activeField === "time" ? "input-time" : "input-power");
+        el.value = "";
+    }
+</script>
+}

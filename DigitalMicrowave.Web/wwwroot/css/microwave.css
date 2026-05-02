@@ -1,0 +1,75 @@
+/* Microwave display */
+.microwave-card {
+    border: 2px solid #333;
+}
+
+.microwave-display {
+    background: #1a1a1a;
+    color: #00ff88;
+    font-family: 'Courier New', monospace;
+    border-radius: 8px;
+    padding: 16px 20px;
+    min-height: 90px;
+}
+
+.display-time {
+    font-size: 2.8rem;
+    font-weight: bold;
+    letter-spacing: 4px;
+    line-height: 1;
+}
+
+.display-power {
+    font-size: 0.85rem;
+    color: #88ffcc;
+    margin-top: 4px;
+}
+
+.display-program {
+    font-size: 0.8rem;
+    color: #ffcc00;
+    margin-top: 2px;
+}
+
+/* Heating string */
+.heating-string-box {
+    background: #111;
+    color: #ffaa00;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    padding: 10px 12px;
+    min-height: 60px;
+    max-height: 120px;
+    overflow-y: auto;
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+
+/* Numeric pad */
+.numpad {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.numpad-btn {
+    aspect-ratio: 1;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 0;
+}
+
+/* Programs list */
+.program-item {
+    border-left: 4px solid #6c757d;
+    transition: background 0.15s;
+}
+
+.program-item:hover {
+    background: #f8f9fa;
+}
+
+.program-custom {
+    border-left-color: #ffc107;
+}
