@@ -1,0 +1,32 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+*.userprefs
+
+## Build artifacts
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.exe
+*.dll
+*.pdb
+
+## NuGet
+*.nupkg
+packages/
+.nuget/
+
+## JSON persistence
+custom_programs.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Environment
+appsettings.Development.json
